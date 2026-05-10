@@ -1,0 +1,54 @@
+{
+  "name": "@mcowger/skillfu",
+  "version": "0.1.1",
+  "description": "A minimal CLI for installing agent skills. Symlink-only, lockfile-driven.",
+  "type": "module",
+  "bin": {
+    "skillfu": "dist/skillfu-cli.mjs"
+  },
+  "files": [
+    "dist/skillfu-cli.mjs",
+    "completions/"
+  ],
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "build": "bun run build:node && bun run build:binary",
+    "build:binary": "bun build src/cli.ts --outfile dist/skillfu --target bun --compile",
+    "build:node": "bun build src/cli.ts --outfile dist/skillfu-cli.mjs --target node && sed -i '' '1s|#!/usr/bin/env bun|#!/usr/bin/env node|' dist/skillfu-cli.mjs && chmod +x dist/skillfu-cli.mjs",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "prepublishOnly": "bun run build:node"
+  },
+  "keywords": [
+    "cli",
+    "agent",
+    "skills",
+    "ai",
+    "symlink",
+    "lockfile",
+    "kung-fu"
+  ],
+  "author": "Matt Cowger",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.3.0",
+    "commander": "^14.0.3",
+    "picocolors": "^1.1.1",
+    "simple-git": "^3.36.0",
+    "yaml": "^2.8.4"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.13",
+    "prettier": "^3.5.3",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

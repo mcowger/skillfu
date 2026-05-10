@@ -1,0 +1,83 @@
+#compdef skillfu
+# skillfu shell completions for zsh
+# Install: skillfu completions zsh > ~/.zfunc/_skillfu
+# Then:     add ~/.zfunc to your fpath in ~/.zshrc
+
+_skillfu() {
+  local -a commands
+  commands=(
+    'add:Install skills from a GitHub repo or local path'
+    'remove:Remove installed skills'
+    'install:Ensure installed skills match the lockfile'
+    'update:Update skills to their latest versions'
+    'completions:Output shell completion script'
+    'help:Display help for a command'
+  )
+
+  _arguments -C \
+    '1:command:->command' \
+    '*::arg:->args'
+
+  case $state in
+    command)
+      _describe 'command' commands
+      ;;
+    args)
+      case ${words[1]} in
+        add)
+          _arguments \
+            '-s+[Install specific skill(s) by name]:skill:' \
+            '--skill+[Install specific skill(s) by name]:skill:' \
+            '-l[Install to project directory]' \
+            '--local[Install to project directory]' \
+            '-y[Skip confirmation prompts]' \
+            '--yes[Skip confirmation prompts]' \
+            '--ref+[Git branch or tag to install from]:branch:' \
+            '1:source:_files'
+          ;;
+        remove)
+          local -a installed_skills
+          local lockfile="$HOME/.config/skillfu/skills.lock"
+          if [[ -f "$lockfile" ]]; then
+            installed_skills=(${(f)"$(grep -o '"[a-z0-9-]*":' "$lockfile" | tr -d '":' | grep -v version)"})
+          fi
+          _arguments \
+            '-l[Remove from project scope]' \
+            '--local[Remove from project scope]' \
+            '-y[Skip confirmation prompts]' \
+            '--yes[Skip confirmation prompts]' \
+            '*:skill:->skills'
+
+          if [[ $state == skills ]]; then
+            _describe 'installed skill' installed_skills
+          fi
+          ;;
+        install)
+          _arguments \
+            '-l[Install from project lockfile]' \
+            '--local[Install from project lockfile]'
+          ;;
+        update)
+          local -a installed_skills
+          local lockfile="$HOME/.config/skillfu/skills.lock"
+          if [[ -f "$lockfile" ]]; then
+            installed_skills=(${(f)"$(grep -o '"[a-z0-9-]*":' "$lockfile" | tr -d '":' | grep -v version)"})
+          fi
+          _arguments \
+            '-l[Update project-scoped skills]' \
+            '--local[Update project-scoped skills]' \
+            '-s+[Update only specific skill(s)]:skill:' \
+            '--skill+[Update only specific skill(s)]:skill:' \
+            '-y[Skip confirmation prompts]' \
+            '--yes[Skip confirmation prompts]'
+          ;;
+        completions)
+          _arguments \
+            '1:shell:(bash zsh fish)'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_skillfu "$@"
