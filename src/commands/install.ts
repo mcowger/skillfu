@@ -140,7 +140,7 @@ export async function runInstall(options: InstallOptions = {}): Promise<void> {
     let tempDir: string | null = null;
 
     try {
-      spinner.start(`Cloning ${pc.cyan(parsed.ownerRepo || parsed.url)}...`);
+      spinner.message(`Cloning ${pc.cyan(parsed.ownerRepo || parsed.url)}...`);
 
       if (parsed.type === 'local') {
         const localSkills = await discoverSkills(parsed.localPath!, parsed.subpath, { includeInternal: true });
@@ -188,6 +188,7 @@ export async function runInstall(options: InstallOptions = {}): Promise<void> {
         }
       }
     } catch (err) {
+      spinner.stop(pc.red('Clone failed'));
       failedCount += sourceSkills.length;
       p.log.error(
         `Failed to clone ${parsed.ownerRepo || parsed.url}: ${err instanceof Error ? err.message : String(err)}`
