@@ -87,8 +87,8 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
   let skills: Skill[];
 
   try {
-    if (isLocal) {
-      // Local path — validate
+    if (isLocalSource) {
+      // Local source — discover from local path
       spinner.start('Validating local path...');
       try {
         resolveLocalPath(parsed.localPath!);
@@ -198,7 +198,7 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
     for (const skill of selectedSkills) {
       if (summaryLines.length > 0) summaryLines.push('');
 
-      if (options.local) {
+      if (isLocal) {
         const skillPath = getCanonicalSkillPath(skill.name, true, cwd);
         summaryLines.push(`${pc.cyan(shortenPath(skillPath, cwd))}`);
       } else {
@@ -263,7 +263,7 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
     }> = [];
 
     for (const skill of selectedSkills) {
-      const result = options.local
+      const result = isLocal
         ? await installSkillLocal(skill, cwd)
         : await installSkillGlobal(skill);
 
