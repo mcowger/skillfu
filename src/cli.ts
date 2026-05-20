@@ -12,7 +12,9 @@ import BASH_COMPLETION from '../completions/skillfu.bash' with { type: 'text' };
 import ZSH_COMPLETION from '../completions/_skillfu' with { type: 'text' };
 import FISH_COMPLETION from '../completions/skillfu.fish' with { type: 'text' };
 
-const VERSION = '0.2.0';
+import pkg from '../package.json' with { type: 'json' };
+
+const VERSION = pkg.version;
 
 const COMPLETIONS: Record<string, string> = {
   bash: BASH_COMPLETION,
