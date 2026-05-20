@@ -1,6 +1,6 @@
 {
   "name": "@mcowger/skillfu",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A minimal CLI for installing agent skills. Symlink-only, lockfile-driven.",
   "type": "module",
   "bin": {

@@ -68,9 +68,10 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
   }
 
   const isLocal = options.local || !!options.target || parsed.type === 'local';
-  const sourceDisplay = isLocal
+  const isLocalSource = parsed.type === 'local';
+  const sourceDisplay = isLocalSource
     ? parsed.localPath!
-    : parsed.ownerRepo || parsed.url;
+    : (parsed.ownerRepo || parsed.url);
 
   spinner.stop(
     `Source: ${pc.cyan(sourceDisplay)}` +
@@ -291,7 +292,6 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
         }
 
         // Determine the skillPath (relative path within the source repo)
-        const isLocalSource = parsed.type === 'local';
         let skillPath: string | undefined;
         if (tempDir && isLocalSource) {
           skillPath = relative(parsed.localPath!, skill.path).replace(/\\/g, '/');
