@@ -1,4 +1,4 @@
-import { join, normalize, resolve, sep, basename } from 'path';
+import { join, normalize, resolve, sep, basename, isAbsolute } from 'path';
 import { homedir } from 'os';
 
 /**
@@ -15,9 +15,21 @@ export function getConfigDir(): string {
 }
 
 /**
+ * Resolve the base directory for local-scoped operations.
+ * If `target` is provided (via -t/--target), use that as the base.
+ * Otherwise fall back to cwd.
+ */
+export function getBaseDir(target?: string): string {
+  if (target) {
+    return isAbsolute(target) ? target : resolve(process.cwd(), target);
+  }
+  return process.cwd();
+}
+
+/**
  * Get the canonical skill storage directory.
  * Global: ~/.config/skillfu/skills/
- * Local: <cwd>/.agents/skills/
+ * Local: <basedir>/.agents/skills/  (basedir = target || cwd)
  */
 export function getCanonicalSkillsDir(local: boolean, cwd?: string): string {
   if (local) {
@@ -29,7 +41,7 @@ export function getCanonicalSkillsDir(local: boolean, cwd?: string): string {
 /**
  * Get the global lockfile path.
  * Global: ~/.config/skillfu/skills.lock
- * Local: <cwd>/.agents/skills.lock
+ * Local: <basedir>/.agents/skills.lock  (basedir = target || cwd)
  */
 export function getLockfilePath(local: boolean, cwd?: string): string {
   if (local) {
@@ -41,7 +53,7 @@ export function getLockfilePath(local: boolean, cwd?: string): string {
 /**
  * Get the symlink target directory (where agents look for skills).
  * Global: ~/.agents/skills/
- * Local: <cwd>/.agents/skills/ (same as canonical — no symlink needed)
+ * Local: <basedir>/.agents/skills/ (same as canonical — no symlink needed)
  */
 export function getSymlinkDir(local: boolean, cwd?: string): string {
   if (local) {

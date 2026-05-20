@@ -2,16 +2,17 @@ import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import { readLockfile, removeSkillFromLockfile } from '../core/lockfile.js';
 import { removeSkillGlobal, removeSkillLocal, getCanonicalSkillPath, getSymlinkSkillPath } from '../core/installer.js';
-import { sanitizeName, shortenPath } from '../utils/paths.js';
+import { sanitizeName, shortenPath, getBaseDir } from '../utils/paths.js';
 
 export interface RemoveOptions {
   local?: boolean;
   yes?: boolean;
+  target?: string;
 }
 
 export async function runRemove(skillNames: string[], options: RemoveOptions = {}): Promise<void> {
-  const cwd = process.cwd();
-  const isLocal = options.local ?? false;
+  const cwd = getBaseDir(options.target);
+  const isLocal = options.local || !!options.target;
 
   console.log();
   p.intro(pc.bgCyan(pc.black(' skillfu ')));

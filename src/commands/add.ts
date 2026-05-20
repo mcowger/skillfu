@@ -10,7 +10,7 @@ import { addSkillToLockfile } from '../core/lockfile.js';
 import { cloneRepo, cleanupTempDir, GitCloneError } from '../providers/github.js';
 import { resolveLocalPath } from '../providers/local.js';
 import { fetchSkillAudit, skillNameToSlug, buildSourceId } from '../providers/skills-sh.js';
-import { sanitizeName, shortenPath, getCanonicalSkillsDir } from '../utils/paths.js';
+import { sanitizeName, shortenPath, getCanonicalSkillsDir, getBaseDir } from '../utils/paths.js';
 import { ensureDir } from '../utils/fs.js';
 import type { Skill } from '../core/skill-discovery.js';
 import type { ParsedSource } from '../core/source-parser.js';
@@ -21,10 +21,11 @@ export interface AddOptions {
   local?: boolean;
   yes?: boolean;
   ref?: string;
+  target?: string;
 }
 
 export async function runAdd(sourceArg: string, options: AddOptions = {}): Promise<void> {
-  const cwd = process.cwd();
+  const cwd = getBaseDir(options.target);
 
   if (!sourceArg) {
     console.log();
@@ -66,7 +67,7 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
     options.ref = parsed.ref;
   }
 
-  const isLocal = parsed.type === 'local';
+  const isLocal = options.local || !!options.target || parsed.type === 'local';
   const sourceDisplay = isLocal
     ? parsed.localPath!
     : parsed.ownerRepo || parsed.url;
@@ -290,26 +291,29 @@ export async function runAdd(sourceArg: string, options: AddOptions = {}): Promi
         }
 
         // Determine the skillPath (relative path within the source repo)
+        const isLocalSource = parsed.type === 'local';
         let skillPath: string | undefined;
-        if (tempDir && !isLocal) {
+        if (tempDir && isLocalSource) {
+          skillPath = relative(parsed.localPath!, skill.path).replace(/\\/g, '/');
+        } else if (tempDir) {
           skillPath = relative(tempDir, skill.path).replace(/\\/g, '/');
         }
 
         // Determine source for lockfile
-        const lockSource = isLocal ? parsed.localPath! : (parsed.ownerRepo || parsed.url);
-        const lockSourceType = isLocal ? 'local' : 'github';
+        const lockSource = isLocalSource ? parsed.localPath! : (parsed.ownerRepo || parsed.url);
+        const lockSourceType = isLocalSource ? 'local' : 'github';
 
         await addSkillToLockfile(
           sanitizeName(skill.name),
           {
             source: lockSource,
             sourceType: lockSourceType,
-            sourceUrl: isLocal ? parsed.localPath! : parsed.url,
+            sourceUrl: isLocalSource ? parsed.localPath! : parsed.url,
             skillPath,
             ref: options.ref,
             hash,
           },
-          !!options.local,
+          isLocal,
           cwd
         );
       }

@@ -5,6 +5,7 @@ import { runAdd } from './commands/add.js';
 import { runRemove } from './commands/remove.js';
 import { runInstall } from './commands/install.js';
 import { runUpdate } from './commands/update.js';
+import { runList } from './commands/list.js';
 
 // Embed completion scripts — Bun bundles these as strings at build time
 import BASH_COMPLETION from '../completions/skillfu.bash' with { type: 'text' };
@@ -29,11 +30,13 @@ program
 Examples:
   $ skillfu add vercel-labs/agent-skills
   $ skillfu add vercel-labs/agent-skills --skill frontend-design --skill skill-creator
-  $ skillfu add vercel-labs/agent-skills -l --skill frontend-design
+  $ skillfu add -l vercel-labs/agent-skills --skill frontend-design
+  $ skillfu add -t ~/projects/myapp vercel-labs/agent-skills frontend-design
   $ skillfu add ./my-local-skills
   $ skillfu add owner/repo@skill-name
   $ skillfu add owner/repo#branch-name
   $ skillfu remove frontend-design
+  $ skillfu list
   $ skillfu install
   $ skillfu update
 
@@ -56,8 +59,9 @@ Environment:
 program
   .command('add <source> [skill]')
   .description('Install skills from a GitHub repo or local path')
-  .usage('<source> [skill] [options]')
-  .option('-s, --skill <name>', 'Install specific skill(s) by name (repeatable)', collectSkills, [])
+  .usage('[-l] <source> [skill] [options]')
+  .option('-t, --target <dir>', 'Install to <dir>/.agents/skills/ instead of current directory')
+  .option('-s, --skill <name>', 'Install specific skill(s) by name; also settable as positional arg or @suffix (repeatable)', collectSkills, [])
   .option('-l, --local', 'Install to project directory (.agents/skills/)')
   .option('-y, --yes', 'Skip confirmation prompts')
   .option('--ref <branch>', 'Git branch or tag to install from')
@@ -70,11 +74,18 @@ Source formats:
   https://github.com/owner/repo    Full GitHub URL
   ./path or /abs/path              Local directory
 
+Specifying skills (all equivalent):
+  skillfu add owner/repo --skill frontend-design
+  skillfu add owner/repo frontend-design
+  skillfu add owner/repo@frontend-design
+
 Examples:
-  $ skillfu add vercel-labs/agent-skills
-  $ skillfu add vercel-labs/agent-skills github-actions-docs
+  $ skillfu add vercel-lab/agent-skills
   $ skillfu add vercel-labs/agent-skills --skill frontend-design
+  $ skillfu add vercel-labs/agent-skills frontend-design
   $ skillfu add vercel-labs/agent-skills@frontend-design
+  $ skillfu add -l vercel-labs/agent-skills --skill frontend-design
+  $ skillfu add -t ~/projects/myapp vercel-labs/agent-skills frontend-design
   $ skillfu add vercel-labs/agent-skills#develop --skill frontend-design
   $ skillfu add https://github.com/vercel-labs/agent-skills
   $ skillfu add ./my-skills
@@ -93,31 +104,53 @@ Examples:
 program
   .command('remove <skills...>')
   .description('Remove installed skills')
-  .usage('<skill-name> [skill-name...] [options]')
+  .usage('[-l] <skill-name> [skill-name...] [options]')
+  .option('-t, --target <dir>', 'Remove from <dir>/.agents/skills/ instead of current directory')
   .option('-l, --local', 'Remove from project scope')
   .option('-y, --yes', 'Skip confirmation prompts')
   .addHelpText('after', `
 Examples:
   $ skillfu remove frontend-design
+  $ skillfu remove -l frontend-design
+  $ skillfu remove -t ~/projects/myapp frontend-design
   $ skillfu remove frontend-design skill-creator
-  $ skillfu remove frontend-design -l
-  $ skillfu remove frontend-design -y
+  $ skillfu remove -y frontend-design
 `)
   .action(async (skills, opts) => {
     await runRemove(skills, opts);
   });
 
 program
+  .command('list')
+  .description('List registered skills from the lockfile')
+  .option('-t, --target <dir>', 'List skills from <dir>/.agents/skills.lock')
+  .option('-l, --local', 'List project-scoped skills')
+  .addHelpText('after', `
+Shows all skills registered in the lockfile along with their source,
+install status, and other metadata.
+
+Examples:
+  $ skillfu list            # list global skills
+  $ skillfu list -l         # list project skills
+  $ skillfu list -t ~/projects/myapp
+`)
+  .action(async (opts) => {
+    await runList(opts);
+  });
+
+program
   .command('install')
   .description('Ensure installed skills match the lockfile (idempotent)')
+  .option('-t, --target <dir>', 'Install from <dir>/.agents/skills.lock')
   .option('-l, --local', 'Install from project lockfile')
   .addHelpText('after', `
 This command makes the filesystem match the lockfile — similar to "npm ci".
 It restores any missing skills and removes orphaned skills not in the lockfile.
 
 Examples:
-  $ skillfu install          # restore global skills from lockfile
-  $ skillfu install -l       # restore project skills from lockfile
+  $ skillfu install            # restore global skills from lockfile
+  $ skillfu install -l         # restore project skills from lockfile
+  $ skillfu install -t ~/projects/myapp
 `)
   .action(async (opts) => {
     await runInstall(opts);
@@ -126,6 +159,7 @@ Examples:
 program
   .command('update')
   .description('Update skills to their latest versions')
+  .option('-t, --target <dir>', 'Update skills in <dir>/.agents/skills/')
   .option('-l, --local', 'Update project-scoped skills')
   .option('-s, --skill <name>', 'Update only specific skill(s)', collectSkills, [])
   .option('-y, --yes', 'Skip confirmation prompts')
@@ -134,8 +168,9 @@ Checks for updates using the skills.sh API, falling back to GitHub Trees API.
 Local path skills cannot be updated remotely.
 
 Examples:
-  $ skillfu update                  # update all global skills
-  $ skillfu update -l               # update all project skills
+  $ skillfu update                    # update all global skills
+  $ skillfu update -l                 # update all project skills
+  $ skillfu update -t ~/projects/myapp
   $ skillfu update --skill frontend-design
   $ skillfu update -l --skill frontend-design
 `)

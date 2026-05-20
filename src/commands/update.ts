@@ -8,18 +8,19 @@ import { installSkillGlobal, installSkillLocal, getCanonicalSkillPath, getSymlin
 import { computeSkillHash } from '../core/hash.js';
 import { cloneRepo, cleanupTempDir, fetchSkillFolderHash } from '../providers/github.js';
 import { getSkillHash, skillNameToSlug, buildSourceId } from '../providers/skills-sh.js';
-import { sanitizeName, shortenPath } from '../utils/paths.js';
+import { sanitizeName, shortenPath, getBaseDir } from '../utils/paths.js';
 import type { Skill } from '../core/skill-discovery.js';
 
 export interface UpdateOptions {
   local?: boolean;
   skill?: string[];
   yes?: boolean;
+  target?: string;
 }
 
 export async function runUpdate(options: UpdateOptions = {}): Promise<void> {
-  const cwd = process.cwd();
-  const isLocal = options.local ?? false;
+  const cwd = getBaseDir(options.target);
+  const isLocal = options.local || !!options.target;
 
   console.log();
   p.intro(pc.bgCyan(pc.black(' skillfu ')));

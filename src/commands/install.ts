@@ -9,12 +9,13 @@ import { discoverSkills, filterSkills, getSkillDisplayName } from '../core/skill
 import { installSkillGlobal, installSkillLocal, getCanonicalSkillPath, getSymlinkSkillPath } from '../core/installer.js';
 import { computeSkillHash } from '../core/hash.js';
 import { cloneRepo, cleanupTempDir } from '../providers/github.js';
-import { sanitizeName, shortenPath, getCanonicalSkillsDir, getSymlinkDir } from '../utils/paths.js';
+import { sanitizeName, shortenPath, getCanonicalSkillsDir, getSymlinkDir, getBaseDir } from '../utils/paths.js';
 import { listSubdirectories, isDirectory, removeDir, removeSymlink } from '../utils/fs.js';
 import type { Skill } from '../core/skill-discovery.js';
 
 export interface InstallOptions {
   local?: boolean;
+  target?: string;
 }
 
 /**
@@ -22,8 +23,8 @@ export interface InstallOptions {
  * Like `npm ci` — makes the filesystem match the lockfile.
  */
 export async function runInstall(options: InstallOptions = {}): Promise<void> {
-  const cwd = process.cwd();
-  const isLocal = options.local ?? false;
+  const cwd = getBaseDir(options.target);
+  const isLocal = options.local || !!options.target;
 
   console.log();
   p.intro(pc.bgCyan(pc.black(' skillfu ')));
